@@ -47,6 +47,15 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
     record_audio = t.Bool(True).tag(sync=True)
     fps = t.Int(30).tag(sync=True)
 
+    # --- Capture quality ---
+    # Requested camera resolution (``ideal``: the browser picks the closest the
+    # device supports). The MediaRecorder bitrate is the real quality lever --
+    # left unset the browser defaults to a soft ~2.5 Mbps regardless of size.
+    video_width = t.Int(1920).tag(sync=True)
+    video_height = t.Int(1080).tag(sync=True)
+    video_bitrate = t.Int(8_000_000).tag(sync=True)  # bits/s (~8 Mbps)
+    audio_bitrate = t.Int(128_000).tag(sync=True)  # bits/s
+
     # --- Live post-processing filters (baked into the recording) ---
     brightness = t.Float(1.0).tag(sync=True)
     contrast = t.Float(1.0).tag(sync=True)

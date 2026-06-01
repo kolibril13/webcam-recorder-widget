@@ -151,12 +151,13 @@ function render({ model, el }) {
     try {
       setStatus("requesting");
       const wantAudio = model.get("record_audio");
-      const constraints = {
-        video: deviceId
-          ? { deviceId: { exact: deviceId } }
-          : { width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: wantAudio,
+      const videoConstraints = {
+        width: { ideal: model.get("video_width") || 1280 },
+        height: { ideal: model.get("video_height") || 720 },
+        frameRate: { ideal: model.get("fps") || 30 },
       };
+      if (deviceId) videoConstraints.deviceId = { exact: deviceId };
+      const constraints = { video: videoConstraints, audio: wantAudio };
       const next = await navigator.mediaDevices.getUserMedia(constraints);
       if (stream) stream.getTracks().forEach((tr) => tr.stop());
       stream = next;
@@ -220,8 +221,13 @@ function render({ model, el }) {
     }
     const mixed = new MediaStream(tracks);
     chunks = [];
+    const recOpts = { mimeType };
+    const vbr = model.get("video_bitrate");
+    const abr = model.get("audio_bitrate");
+    if (vbr) recOpts.videoBitsPerSecond = vbr;
+    if (abr) recOpts.audioBitsPerSecond = abr;
     try {
-      recorder = new MediaRecorder(mixed, { mimeType });
+      recorder = new MediaRecorder(mixed, recOpts);
     } catch (_) {
       recorder = new MediaRecorder(mixed);
     }
