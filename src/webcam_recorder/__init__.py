@@ -168,9 +168,15 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
         else:
             dst = src.with_suffix(".mp4")
         dst.parent.mkdir(parents=True, exist_ok=True)
+        # MediaRecorder writes variable-frame-rate WebM with a bogus declared
+        # frame rate (often ~60fps for a 30fps capture). Editors like Blender
+        # trust that header and mis-time the strip, so the video drifts out of
+        # sync with the audio. Force a constant frame rate so the frame count
+        # matches the real duration.
         cmd = [
             ffmpeg, "-y", "-i", str(src),
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+            "-fps_mode", "cfr", "-r", str(self.fps),
             "-c:a", "aac", "-b:a", "192k",
         ]
         if faststart:
