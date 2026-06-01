@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+dist/
+build/
+*.egg-info/
+recordings/
+*.webm
+*.mp4
+*.m4a

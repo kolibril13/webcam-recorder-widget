@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "webcam-recorder-widget"
+description = "A Jupyter anywidget that records webcam video + microphone audio to disk, with live post-processing filters."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Jan-Hendrik Müller", email = "jan-hendrik.mueller@gmx.net" }]
+keywords = ["anywidget", "jupyter", "webcam", "recorder", "video", "audio", "mediarecorder"]
+classifiers = [
+    "Framework :: Jupyter",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Video :: Capture",
+    "Topic :: Multimedia :: Sound/Audio :: Capture/Recording",
+]
+dynamic = ["version"]
+dependencies = [
+    "anywidget>=0.9.0",
+    "traitlets>=5.0",
+    "ipywidgets>=8.0",
+    "jupyter>=1.1.1",
+    "lab>=8.6",
+]
+
+[project.optional-dependencies]
+dev = ["jupyterlab", "watchfiles"]
+
+[tool.hatch.version]
+path = "src/webcam_recorder/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/webcam_recorder"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/webcam_recorder",
+    "README.md",
+]
