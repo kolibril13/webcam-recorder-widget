@@ -66,7 +66,7 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
 
     def __init__(self, **kwargs: object) -> None:
         super().__init__(**kwargs)
-        self.on_msg(self._handle_custom_msg)
+        self.on_msg(self._on_frontend_msg)
 
     # --- Imperative API ---
     def start(self) -> None:
@@ -87,7 +87,9 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
         self.recording = False
 
     # --- Binary receive: JS hands us the finished recording ---
-    def _handle_custom_msg(self, content: dict, buffers: list) -> None:
+    # on_msg callbacks are invoked as (widget, content, buffers); `_widget`
+    # is this same instance, so we just use `self`.
+    def _on_frontend_msg(self, _widget: object, content: dict, buffers: list) -> None:
         if not isinstance(content, dict) or content.get("type") != "save":
             return
         if not buffers:
@@ -105,12 +107,25 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
         self.status = "saved"
 
     # --- Optional post-processing helpers (require ffmpeg on PATH) ---
-    def to_mp4(self, path: str | None = None, *, faststart: bool = True) -> str:
+    def to_mp4(
+        self,
+        path: str | None = None,
+        *,
+        dest: str | None = None,
+        faststart: bool = True,
+    ) -> str:
         """Transcode a recording to H.264/AAC MP4 (better for editing/sharing).
 
-        Defaults to the most recent clip. Returns the output path. Raises if
-        ffmpeg is not installed.
+        `path` is the source clip (defaults to the most recent recording).
+        `dest` is where to write the mp4: a directory (the filename is reused)
+        or a full file path. When omitted, the mp4 lands next to the source.
+        Returns the output path. Raises if ffmpeg is not installed.
         """
+        if not path and not self.last_saved_path:
+            raise FileNotFoundError(
+                "No recording to convert yet — record a clip first "
+                "(w.record() / w.stop_recording())."
+            )
         src = pathlib.Path(path or self.last_saved_path)
         if not src.exists():
             raise FileNotFoundError(f"No recording found at {src!s}")
@@ -119,7 +134,13 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
             raise RuntimeError(
                 "ffmpeg not found on PATH. Install it (e.g. `brew install ffmpeg`)."
             )
-        dst = src.with_suffix(".mp4")
+        if dest:
+            dst = pathlib.Path(dest).expanduser()
+            if dst.is_dir() or dst.suffix == "":
+                dst = dst / f"{src.stem}.mp4"
+        else:
+            dst = src.with_suffix(".mp4")
+        dst.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
             ffmpeg, "-y", "-i", str(src),
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",

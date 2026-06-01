@@ -236,9 +236,12 @@ function render({ model, el }) {
       downloadLink.href = lastObjectUrl;
       downloadLink.download = `recording_${Date.now()}.webm`;
       downloadLink.hidden = false;
-      // Ship bytes to Python to write to disk.
+      // Ship bytes to Python to write to disk. model.send is
+      // send(content, callbacks, buffers) -- buffers MUST be the 3rd arg.
       const buf = await blob.arrayBuffer();
-      model.send({ type: "save", mime: mimeType, ext: "webm" }, [buf]);
+      model.send({ type: "save", mime: mimeType, ext: "webm" }, undefined, [
+        new DataView(buf),
+      ]);
       setStatus("ready");
     };
     recorder.start();
