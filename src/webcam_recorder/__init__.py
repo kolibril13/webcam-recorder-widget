@@ -106,7 +106,29 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
         self.last_saved_path = str(path.resolve())
         self.status = "saved"
 
-    # --- Optional post-processing helpers (require ffmpeg on PATH) ---
+    # --- Optional post-processing helpers (require ffmpeg) ---
+    @staticmethod
+    def _resolve_ffmpeg() -> str:
+        """Locate an ffmpeg binary.
+
+        Prefers a system ffmpeg on PATH; otherwise falls back to the static
+        binary bundled with the ``imageio-ffmpeg`` package (handy inside
+        Blender's Python, which ships no ffmpeg). Raises with install hints
+        if neither is available.
+        """
+        ffmpeg = shutil.which("ffmpeg")
+        if ffmpeg:
+            return ffmpeg
+        try:
+            import imageio_ffmpeg
+        except ImportError:
+            raise RuntimeError(
+                "ffmpeg not found. Either install it on PATH "
+                "(e.g. `brew install ffmpeg`) or `pip install imageio-ffmpeg` "
+                "to use a bundled static binary."
+            ) from None
+        return imageio_ffmpeg.get_ffmpeg_exe()
+
     def to_mp4(
         self,
         path: str | None = None,
@@ -129,11 +151,7 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
         src = pathlib.Path(path or self.last_saved_path)
         if not src.exists():
             raise FileNotFoundError(f"No recording found at {src!s}")
-        ffmpeg = shutil.which("ffmpeg")
-        if not ffmpeg:
-            raise RuntimeError(
-                "ffmpeg not found on PATH. Install it (e.g. `brew install ffmpeg`)."
-            )
+        ffmpeg = self._resolve_ffmpeg()
         if dest:
             dst = pathlib.Path(dest).expanduser()
             if dst.is_dir() or dst.suffix == "":
@@ -157,9 +175,7 @@ class WebcamRecorderWidget(anywidget.AnyWidget):
         src = pathlib.Path(path or self.last_saved_path)
         if not src.exists():
             raise FileNotFoundError(f"No recording found at {src!s}")
-        ffmpeg = shutil.which("ffmpeg")
-        if not ffmpeg:
-            raise RuntimeError("ffmpeg not found on PATH.")
+        ffmpeg = self._resolve_ffmpeg()
         dst = src.with_suffix(".m4a")
         subprocess.run(
             [ffmpeg, "-y", "-i", str(src), "-vn", "-c:a", "aac", "-b:a", "192k", str(dst)],

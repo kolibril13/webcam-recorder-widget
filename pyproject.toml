@@ -25,6 +25,7 @@ dependencies = [
     "ipywidgets>=8.0",
     "jupyter>=1.1.1",
     "lab>=8.6",
+    "imageio-ffmpeg>=0.4.9",
 ]
 
 [project.optional-dependencies]
