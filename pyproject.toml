@@ -26,6 +26,7 @@ dependencies = [
     "jupyter>=1.1.1",
     "lab>=8.6",
     "imageio-ffmpeg>=0.4.9",
+    "jupyterlab>=4.5.7",
 ]
 
 [project.optional-dependencies]
